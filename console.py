@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 """ Console Module """
 import cmd
+from datetime import datetime
 import sys
 from models.base_model import BaseModel
 from models.__init__ import storage
@@ -73,7 +74,7 @@ class HBNBCommand(cmd.Cmd):
                 pline = pline[2].strip()  # pline is now str
                 if pline:
                     # check for *args or **kwargs
-                    if pline[0] is '{' and pline[-1] is'}'\
+                    if pline[0] is '{' and pline[-1] is'}' \
                             and type(eval(pline)) is dict:
                         _args = pline
                     else:
@@ -116,15 +117,21 @@ class HBNBCommand(cmd.Cmd):
     def do_create(self, args):
         """ Create an object of any class"""
         if not args:
-            print("** class name missing **")
-            return
-        elif args not in HBNBCommand.classes:
+            raise SyntaxError
+        arg_list = args.split(" ")
+        kw = {}
+        for arg in arg_list[1:]:
+            arg_splited = arg.split("=")
+            if type(arg_splited[1]) is str:
+                arg_splited[1] = arg_splited[1].replace("_", " ").replace('"', '\\"')
+                kw[arg_splited[0]] = arg_splited[1]
+        if arg_list[0] not in HBNBCommand.classes:
             print("** class doesn't exist **")
             return
-        new_instance = HBNBCommand.classes[args]()
-        storage.save()
+        new_instance = HBNBCommand.classes[arg_list[0]](**kw)
+        storage.new(new_instance)
         print(new_instance.id)
-        storage.save()
+        new_instance.save()
 
     def help_create(self):
         """ Help information for the create method """
@@ -188,6 +195,7 @@ class HBNBCommand(cmd.Cmd):
 
         try:
             del(storage.all()[key])
+            
             storage.save()
         except KeyError:
             print("** no instance found **")
