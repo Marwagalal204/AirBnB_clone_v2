@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """ """
-from models.base_model import BaseModel
+from models.base_model import BaseModel, Base
 import unittest
 import datetime
 from uuid import UUID
@@ -27,6 +27,15 @@ class test_basemodel(unittest.TestCase):
         except:
             pass
 
+    def test_init(self):
+        """Tests the initialization of the model class."""
+        self.assertIsInstance(self.value(), BaseModel)
+        if self.value is not BaseModel:
+            self.assertIsInstance(self.value(), Base)
+        else:
+            self.assertNotIsInstance(self.value(), Base)
+
+
     def test_default(self):
         """ """
         i = self.value()
@@ -46,6 +55,8 @@ class test_basemodel(unittest.TestCase):
         copy.update({1: 2})
         with self.assertRaises(TypeError):
             new = BaseModel(**copy)
+    @unittest.skipIf(
+        os.getenv('HBNB_TYPE_STORAGE') == 'db', 'FileStorage test')
 
     def test_save(self):
         """ Testing save """
@@ -79,6 +90,8 @@ class test_basemodel(unittest.TestCase):
         n = {'Name': 'test'}
         with self.assertRaises(KeyError):
             new = self.value(**n)
+            self.assertTrue(hasattr(new, 'Name'))
+
 
     def test_id(self):
         """ """
@@ -97,6 +110,19 @@ class test_basemodel(unittest.TestCase):
         n = new.to_dict()
         new = BaseModel(**n)
         self.assertFalse(new.created_at == new.updated_at)
+    
+    
+    @unittest.skipIf(
+        os.getenv('HBNB_TYPE_STORAGE') == 'db', 'FileStorage test')
+    def test_delete(self):
+        """Tests the delete function of the BaseModel class."""
+        from models import storage
+        i = self.value()
+        i.save()
+        self.assertTrue(i in storage.all().values())
+        i.delete()
+        self.assertFalse(i in storage.all().values())
+
 
     def test_init_BaseModel(self):
         """test if the base is an type BaseModel"""
